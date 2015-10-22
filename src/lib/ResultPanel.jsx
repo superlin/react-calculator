@@ -13,10 +13,10 @@ var replacement = [
 
 export default class ResultPanel extends React.Component {
   static propTypes = {
-    exp: React.PropTypes.string
+    exp: React.PropTypes.object
   };
   static defaultProps = {
-    exp: 0
+    exp: {}
   };
   constructor() {
     super();

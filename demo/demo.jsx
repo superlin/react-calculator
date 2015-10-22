@@ -1,9 +1,10 @@
 import React from 'react';
+import ReactDOM from 'react-dom';
 import Calculator from '../src/index';
 
 require('./demo.scss');
 
-React.render(
+ReactDOM.render(
     <Calculator />,
     document.getElementById('demo')
 );

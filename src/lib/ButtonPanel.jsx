@@ -1,4 +1,5 @@
 import React from 'react';
+import ReactDOM from 'react-dom';
 
 export default class ButtonPanel extends React.Component {
   constructor() {
@@ -15,7 +16,7 @@ export default class ButtonPanel extends React.Component {
     this.props.onClick(target.dataset.value);
   }
   componentDidMount() {
-    var dom = React.findDOMNode(this);
+    var dom = ReactDOM.findDOMNode(this);
     var buttons = dom.querySelectorAll('button');
     buttons = [].slice.call(buttons);
     buttons.forEach((button) => {
