@@ -6,13 +6,117 @@ export default class Calculator extends React.Component {
   constructor() {
     super();
     this.state = {
-      last: '',
-      cur: '0'
+      input: [],
+      num: 0,
+      lastch: '',
+      lastop: '+',
+      text: ''
     };
     this.onButtonClick = this.onButtonClick.bind(this);
   }
   onButtonClick(type) {
-    var cur;
+    var exp, op, ch, text, num, input, res;
+
+    var state = this.state;
+    switch (type) {
+    case 'c':
+      this.setState({
+        lastch: '',
+        text: ''
+      });
+      break;
+
+    case 'ac':
+      this.setState({
+        input: [],
+        num: 0,
+        lastch: '',
+        lastop: '+',
+        text: '',
+      });
+      break;
+
+    case 'pn':
+
+      break;
+
+    case '.':
+
+      break;
+
+    case '+':
+    case '-':
+      op = state.lastch;
+      if (op === '+' || op === '-') {
+        this.setState({
+          lastop: type
+        });
+        break;
+      }
+
+      if (state.input.length === 0) {
+        text = state.text;
+        this.setState({
+          input: [text, type],
+          num: parseFloat(text),
+          lastop: type,
+          lastch: type
+        });
+      } else {
+        exp = state.input.join(" ");
+        res = eval(exp);
+        this.setState({
+          input: [res, type],
+          num: res,
+          lastop: type,
+          lastch: type,
+          text: res + ''
+        });
+      }
+
+      break;
+
+    case '=':
+      input = state.input;
+      num = state.num;
+
+      if (input.length === 0) {
+        exp = parseFloat(state.text) + " " + state.lastop + " " + num;
+      } else {
+        exp = state.input.join(" ");
+        ch = state.lastch;
+        if (/[0-9]/.test(ch)) {
+          num = parseFloat(state.text);
+        }
+        exp += " " + num;
+      }
+
+      res = eval(exp);
+      this.setState({
+        input: [],
+        lastch: type,
+        num: num,
+        text: res + ''
+      });
+      break;
+
+    default:
+      ch = state.lastch;
+      text = state.text;
+      if (!/[+\-*=/0]/.test(ch)) {
+        this.setState({
+          lastch: type,
+          text: text+type
+        });
+      } else {
+        this.setState({
+          lastch: type,
+          text: type
+        });
+      }
+    }
+
+    /*var cur;
     var lastLetter;
     switch (type) {
     case 'c':
@@ -68,17 +172,14 @@ export default class Calculator extends React.Component {
         cur: this.state.cur === '0' ? type : this.state.cur + type
       });
       break;
-    }
+    }*/
   }
   render() {
-    var exp = {
-      cur: this.state.cur,
-      last: this.state.last
-    };
+    var num = this.state.text;
     return (
       <div className="react-calculator">
-        <ResultPanel exp={exp}/>
-        <ButtonPanel onClick={this.onButtonClick}/>
+        <ResultPanel num={num}/>
+        <ButtonPanel onClick={this.onButtonClick} />
       </div>
     );
   }
