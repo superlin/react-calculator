@@ -54,7 +54,7 @@
 /******/ 	
 /******/ 	
 /******/ 	var hotApplyOnUpdate = true;
-/******/ 	var hotCurrentHash = "381ae047d8e23e1059e0"; // eslint-disable-line no-unused-vars
+/******/ 	var hotCurrentHash = "e2711bcd17482b17d876"; // eslint-disable-line no-unused-vars
 /******/ 	var hotCurrentModuleData = {};
 /******/ 	var hotCurrentParents = []; // eslint-disable-line no-unused-vars
 /******/ 	
@@ -642,7 +642,7 @@
 		}
 	}
 
-	/* WEBPACK VAR INJECTION */}.call(exports, "?http://localhost:3000"))
+	/* WEBPACK VAR INJECTION */}.call(exports, "?http://10.210.97.235:3000"))
 
 /***/ },
 /* 2 */
@@ -29577,8 +29577,11 @@
 
 	    _get(Object.getPrototypeOf(Calculator.prototype), 'constructor', this).call(this);
 	    this.state = {
-	      last: '',
-	      cur: '0'
+	      input: [],
+	      num: 0,
+	      lastch: '0',
+	      lastop: '+',
+	      text: '0'
 	    };
 	    this.onButtonClick = this.onButtonClick.bind(this);
 	  }
@@ -29586,72 +29589,245 @@
 	  _createClass(Calculator, [{
 	    key: 'onButtonClick',
 	    value: function onButtonClick(type) {
-	      var cur;
-	      var lastLetter;
+	      /*jshint evil:true*/
+
+	      var exp, res;
+
+	      var _state = this.state;
+	      var input = _state.input;
+	      var num = _state.num;
+	      var lastch = _state.lastch;
+	      var lastop = _state.lastop;
+	      var text = _state.text;
+
 	      switch (type) {
 	        case 'c':
 	          this.setState({
-	            last: '',
-	            cur: '0'
+	            lastch: '0',
+	            text: '0'
 	          });
 	          break;
-	        case 'back':
+
+	        case 'a':
 	          this.setState({
-	            cur: this.state.cur === '0' ? this.state.cur : this.state.cur.slice(0, -1) || '0'
+	            input: [],
+	            num: 0,
+	            lastch: '0',
+	            lastop: '+',
+	            text: '0'
 	          });
 	          break;
-	        case '=':
-	          try {
-	            this.setState({
-	              last: this.state.cur + '=',
-	              cur: eval(this.state.cur) + ''
-	            });
-	          } catch (e) {
-	            this.setState({
-	              last: this.state.cur + '=',
-	              cur: 'NaN'
-	            });
+
+	        case 'f':
+	          if (text[0] === '-') {
+	            text = text.slice(1);
+	          } else {
+	            text = '-' + text;
 	          }
+	          this.setState({
+	            text: text
+	          });
 	          break;
+
 	        case '+':
 	        case '-':
-	        case '*':
-	        case '/':
-	          cur = this.state.cur;
-	          lastLetter = cur.slice(-1);
-	          if (lastLetter === '+' || lastLetter === '-' || lastLetter === '*' || lastLetter === '/') this.setState({
-	            cur: cur.slice(0, -1) + type
-	          });else this.setState({
-	            cur: this.state.cur + type
-	          });
-	          break;
-	        case '.':
-	          cur = this.state.cur;
-	          lastLetter = cur.slice(-1);
-	          if (lastLetter !== '.') {
+	          if (lastch === type) {
+	            break;
+	          }
+
+	          if (/[+\-*/]/.test(lastch)) {
+	            if (input.length === 0) {
+	              this.setState({
+	                lastop: type,
+	                lastch: type
+	              });
+	            }
+	            // 5*-
+	            else if (input.length === 2) {
+	                input[1] = type;
+	                this.setState({
+	                  input: input,
+	                  lastop: type,
+	                  lastch: type
+	                });
+	              }
+	              // 5+5*-
+	              else if (input.length === 4) {
+	                  res = eval(input.slice(0, 2).join(" "));
+	                  this.setState({
+	                    input: [res, type],
+	                    lastop: type,
+	                    lastch: type,
+	                    num: res
+	                  });
+	                }
+
+	            break;
+	          }
+
+	          res = parseFloat(text);
+	          if (input.length === 0) {
 	            this.setState({
-	              cur: this.state.cur + type
+	              input: [res, type],
+	              num: res,
+	              lastop: type,
+	              lastch: type
 	            });
 	          }
+	          // 6*5+
+	          // 6+5+
+	          // 5+5*5+
+	          else if (input.length === 2 || input.length === 4) {
+	              exp = input.join(" ");
+	              exp += ' ' + res;
+	              res = eval(exp);
+	              this.setState({
+	                input: [res, type],
+	                num: res,
+	                lastop: type,
+	                lastch: type,
+	                text: res + ''
+	              });
+	            }
+
 	          break;
-	        default:
+
+	        case '*':
+	        case '/':
+	          if (lastch === type) {
+	            break;
+	          }
+
+	          if (/[+\-*/]/.test(lastch)) {
+	            // 5+5*/
+	            if (input.length === 0 || input.length === 4) {
+	              this.setState({
+	                lastop: type,
+	                lastch: type
+	              });
+	            }
+	            // 5+*
+	            else if (input.length === 2) {
+	                input[1] = type;
+	                this.setState({
+	                  input: input,
+	                  lastop: type,
+	                  lastch: type
+	                });
+	              }
+
+	            break;
+	          }
+
+	          res = parseFloat(text);
+	          if (input.length === 0) {
+	            this.setState({
+	              input: [res, type],
+	              num: res,
+	              lastop: type,
+	              lastch: type
+	            });
+	          }
+	          // 6+5*
+	          // 6*5*
+	          else if (input.length === 2) {
+	              if (lastop === '+' || lastop === '-') {
+	                input.push(res, type);
+	                this.setState({
+	                  input: input,
+	                  num: res,
+	                  lastop: type,
+	                  lastch: type
+	                });
+	              } else {
+	                res = eval(input.join(' ') + ' ' + res);
+	                this.setState({
+	                  input: [res, type],
+	                  num: res,
+	                  lastop: type,
+	                  lastch: type,
+	                  text: res + ''
+	                });
+	              }
+	            }
+	            // 6+5*5*
+	            else if (input.length === 4) {
+	                res = eval(input[2] + ' ' + input[3] + ' ' + res);
+	                input.pop();
+	                input.pop();
+	                input.push(res, type);
+	                this.setState({
+	                  input: input,
+	                  num: res,
+	                  lastop: type,
+	                  lastch: type,
+	                  text: res + ''
+	                });
+	              }
+
+	          break;
+
+	        case '=':
+	          res = parseFloat(text);
+	          if (input.length === 0) {
+	            exp = res + " " + lastop + " " + num;
+	          } else {
+	            exp = input.join(" ");
+	            if (/[0-9.]/.test(lastch)) {
+	              num = res;
+	            }
+	            exp += " " + num;
+	          }
+
+	          res = eval(exp);
 	          this.setState({
-	            cur: this.state.cur === '0' ? type : this.state.cur + type
+	            input: [],
+	            lastch: type,
+	            num: num,
+	            text: res + ''
 	          });
 	          break;
+
+	        case '.':
+	          // 无效输入：输入的字符串已经含有小数点
+	          if (/[0-9.]/.test(lastch) && text.indexOf('.') !== -1) {
+	            break;
+	          }
+
+	          if (/[0-9]/.test(lastch)) {
+	            text += type;
+	          } else {
+	            text = '0' + type;
+	          }
+
+	          this.setState({
+	            text: text,
+	            lastch: type
+	          });
+	          break;
+
+	        default:
+	          if (!/[+\-*=/0]/.test(lastch)) {
+	            this.setState({
+	              lastch: type,
+	              text: text + type
+	            });
+	          } else {
+	            this.setState({
+	              lastch: type,
+	              text: type
+	            });
+	          }
 	      }
 	    }
 	  }, {
 	    key: 'render',
 	    value: function render() {
-	      var exp = {
-	        cur: this.state.cur,
-	        last: this.state.last
-	      };
+	      var num = this.state.text;
 	      return _react2['default'].createElement(
 	        'div',
 	        { className: 'react-calculator' },
-	        _react2['default'].createElement(_ResultPanel2['default'], { exp: exp }),
+	        _react2['default'].createElement(_ResultPanel2['default'], { num: num }),
 	        _react2['default'].createElement(_ButtonPanel2['default'], { onClick: this.onButtonClick })
 	      );
 	    }
@@ -29692,28 +29868,24 @@
 
 	var _react2 = _interopRequireDefault(_react);
 
-	var replacement = [{
-	  reg: /\*/g,
-	  dest: '×'
-	}, {
-	  reg: /\//g,
-	  dest: '÷'
-	}];
-
 	var ResultPanel = (function (_React$Component) {
 	  _inherits(ResultPanel, _React$Component);
 
 	  _createClass(ResultPanel, null, [{
 	    key: 'propTypes',
+
+	    //start-non-standard
 	    value: {
-	      exp: _react2['default'].PropTypes.object
+	      num: _react2['default'].PropTypes.string
 	    },
 	    enumerable: true
 	  }, {
 	    key: 'defaultProps',
 	    value: {
-	      exp: {}
+	      num: '0'
 	    },
+
+	    //end-non-standard
 	    enumerable: true
 	  }]);
 
@@ -29726,24 +29898,53 @@
 	  _createClass(ResultPanel, [{
 	    key: 'render',
 	    value: function render() {
-	      var exp = this.props.exp;
-	      var cur, last;
-	      replacement.forEach(function (item) {
-	        exp.cur = exp.cur.replace(item.reg, item.dest);
-	        exp.last = exp.last.replace(item.reg, item.dest);
-	      });
+	      var num = this.props.num,
+	          str = num,
+	          lenlimit = 10,
+	          fReg = /(\d+)(\d{3})/,
+	          parts;
+
+	      if (num !== '-0' && num !== '0' && num[num.length - 1] !== '.') {
+	        num = parseFloat(num);
+	        // 不是数字或者超出范围
+	        if (isNaN(num) || !isFinite(num)) {
+	          str = '错误';
+	        } else {
+	          // 大整数或者很小的浮点数，使用科学计数法
+	          // 如果科学计数法的前半部分过长，保留一定的精度
+	          if (num > 0 && (num >= parseFloat('1e' + lenlimit) || num < parseFloat('1e-' + (lenlimit - 2))) || num < 0 && (num <= parseFloat('-1e' + (lenlimit - 1)) || num > parseFloat('-1e-' + (lenlimit - 3)))) {
+	            str = num.toExponential().split("+").join("");
+	            if (str.length > lenlimit) {
+	              parts = str.split('e');
+	              parts[0] = parseFloat(parts[0]).toPrecision(lenlimit - 1 - parts[1].length) // 保留几位小数
+	              .replace(/0+$/, ""); // 清除尾部的0
+	              str = parts[0] + 'e' + parts[1];
+	            }
+	          }
+	          // 不需要科学计数法的数学
+	          // 整数部分逗号分隔
+	          else {
+	              str = num + '';
+	              if (str.length > lenlimit) {
+	                str = num.toPrecision(lenlimit);
+	              }
+	              parts = str.split('.');
+	              while (fReg.test(parts[0])) {
+	                parts[0] = parts[0].replace(fReg, "$1,$2");
+	              }
+	              str = parts.join('.').replace(/(\.\d*[1-9]+)(0+)$/, "$1"); // 清除尾部的0
+	            }
+	        }
+	      }
+
 	      return _react2['default'].createElement(
 	        'div',
 	        { className: 'result-panel' },
-	        _react2['default'].createElement(
-	          'div',
-	          { className: 'last-row' },
-	          exp.last
-	        ),
+	        _react2['default'].createElement('div', { className: 'last-row' }),
 	        _react2['default'].createElement(
 	          'div',
 	          { className: 'cur-row' },
-	          exp.cur
+	          str
 	        )
 	      );
 	    }
@@ -29922,163 +30123,206 @@
 	    _classCallCheck(this, ButtonPanel);
 
 	    _get(Object.getPrototypeOf(ButtonPanel.prototype), 'constructor', this).call(this);
-	    this.keyMapping = {};
-	    this.onClick = this.onClick.bind(this);
+	    this.eventStart = this.eventStart.bind(this);
+	    this.eventEnd = this.eventEnd.bind(this);
+	    this.btns = {};
+	    this.lastop = '';
 	  }
 
 	  _createClass(ButtonPanel, [{
-	    key: 'onClick',
-	    value: function onClick(event) {
-	      var target = event.target;
-	      target.classList.remove('clicked');
-	      setTimeout(function () {
-	        target.classList.add('clicked');
-	      }, 0);
-	      this.props.onClick(target.dataset.value);
-	    }
-	  }, {
 	    key: 'componentDidMount',
 	    value: function componentDidMount() {
 	      var _this = this;
 
-	      var dom = _reactDom2['default'].findDOMNode(this);
-	      var buttons = dom.querySelectorAll('button');
-	      buttons = [].slice.call(buttons);
-	      buttons.forEach(function (button) {
-	        _this.keyMapping[button.dataset.code] = button;
+	      var root = _reactDom2['default'].findDOMNode(this),
+	          selfBtns = this.btns,
+	          btns = root.querySelectorAll("button"),
+	          isTouch = ('ontouchstart' in window);
+
+	      // pc使用mouse事件，touch设备使用touch事件
+	      if (isTouch) {
+	        root.addEventListener('touchstart', function (event) {
+	          _this.eventStart(event);
+	        });
+	        root.addEventListener('touchend', function (event) {
+	          _this.eventEnd(event);
+	        });
+	      } else {
+	        root.addEventListener('mousedown', function (event) {
+	          _this.eventStart(event);
+	        });
+	        root.addEventListener('mouseup', function (event) {
+	          _this.eventEnd(event);
+	        });
+	      }
+
+	      [].forEach.call(btns, function (btn) {
+	        selfBtns[btn.dataset.value] = btn;
+	      });
+	    }
+	  }, {
+	    key: 'eventStart',
+	    value: function eventStart(event) {
+	      var target = event.target,
+	          dataset = target.dataset,
+	          btns = this.btns;
+
+	      [].forEach.call(Object.keys(btns), function (key) {
+	        btns[key].classList.remove('active');
 	      });
 
-	      window.onkeydown = function (event) {
-	        var key = (event.shiftKey ? 'shift+' : '') + event.keyCode || event.which;
-	        var button = _this.keyMapping[key];
-	        if (button) {
-	          button.click();
-	          event.stopPropagation();
-	          event.preventDefault();
+	      if (/[+\-*/]/.test(dataset.value)) {
+	        target.classList.add('active');
+	      }
+
+	      target.classList.add('clicked');
+	    }
+	  }, {
+	    key: 'eventEnd',
+	    value: function eventEnd(event) {
+	      var target = event.target,
+	          dataset = target.dataset,
+	          lastop = this.lastop;
+
+	      if (target.tagName !== 'BUTTON') {
+	        return;
+	      }
+
+	      // 只有运算符会设置active
+	      if (/[+\-*/]/.test(dataset.value)) {
+	        this.lastop = dataset.value;
+	      }
+	      // 清除时，之前的运算符高亮
+	      else if (dataset.value === 'c') {
+	          if (lastop) {
+	            this.btns[lastop].classList.add('active');
+	          }
 	        }
-	      };
+
+	      setTimeout(function () {
+	        target.classList.remove('clicked');
+	      }, 200);
+
+	      this.props.onClick(dataset.value);
 	    }
 	  }, {
 	    key: 'render',
 	    value: function render() {
 	      return _react2['default'].createElement(
 	        'div',
-	        { className: 'button-panel row' },
+	        { className: 'button-panel s4 column' },
 	        _react2['default'].createElement(
 	          'div',
-	          { className: 's3 column' },
+	          { className: 's1 row' },
 	          _react2['default'].createElement(
-	            'div',
-	            { className: 's1 row' },
-	            _react2['default'].createElement(
-	              'button',
-	              { className: 'button s1', 'data-code': '67', 'data-value': 'c', onClick: this.onClick },
-	              'C'
-	            ),
-	            _react2['default'].createElement(
-	              'button',
-	              { className: 'button s1', 'data-code': '8', 'data-value': 'back', onClick: this.onClick },
-	              '←'
-	            ),
-	            _react2['default'].createElement(
-	              'button',
-	              { className: 'button s1', 'data-code': '191', 'data-value': '/', onClick: this.onClick },
-	              '÷'
-	            )
+	            'button',
+	            { className: 'button s1 sop', 'data-value': 'c' },
+	            ' C '
 	          ),
 	          _react2['default'].createElement(
-	            'div',
-	            { className: 's1 row' },
-	            _react2['default'].createElement(
-	              'button',
-	              { className: 'button s1', 'data-code': '55', 'data-value': '7', onClick: this.onClick },
-	              '7'
-	            ),
-	            _react2['default'].createElement(
-	              'button',
-	              { className: 'button s1', 'data-code': '56', 'data-value': '8', onClick: this.onClick },
-	              '8'
-	            ),
-	            _react2['default'].createElement(
-	              'button',
-	              { className: 'button s1', 'data-code': '57', 'data-value': '9', onClick: this.onClick },
-	              '9'
-	            )
+	            'button',
+	            { className: 'button s1 sop', 'data-value': 'a' },
+	            ' AC '
 	          ),
 	          _react2['default'].createElement(
-	            'div',
-	            { className: 's1 row' },
-	            _react2['default'].createElement(
-	              'button',
-	              { className: 'button s1', 'data-code': '52', 'data-value': '4', onClick: this.onClick },
-	              '4'
-	            ),
-	            _react2['default'].createElement(
-	              'button',
-	              { className: 'button s1', 'data-code': '53', 'data-value': '5', onClick: this.onClick },
-	              '5'
-	            ),
-	            _react2['default'].createElement(
-	              'button',
-	              { className: 'button s1', 'data-code': '54', 'data-value': '6', onClick: this.onClick },
-	              '6'
-	            )
+	            'button',
+	            { className: 'button s1 sop', 'data-value': 'f' },
+	            ' +/- '
 	          ),
 	          _react2['default'].createElement(
-	            'div',
-	            { className: 's1 row' },
-	            _react2['default'].createElement(
-	              'button',
-	              { className: 'button s1', 'data-code': '49', 'data-value': '1', onClick: this.onClick },
-	              '1'
-	            ),
-	            _react2['default'].createElement(
-	              'button',
-	              { className: 'button s1', 'data-code': '50', 'data-value': '2', onClick: this.onClick },
-	              '2'
-	            ),
-	            _react2['default'].createElement(
-	              'button',
-	              { className: 'button s1', 'data-code': '51', 'data-value': '3', onClick: this.onClick },
-	              '3'
-	            )
-	          ),
-	          _react2['default'].createElement(
-	            'div',
-	            { className: 's1 row' },
-	            _react2['default'].createElement(
-	              'button',
-	              { className: 'button s2', 'data-code': '48', 'data-value': '0', onClick: this.onClick },
-	              '0'
-	            ),
-	            _react2['default'].createElement(
-	              'button',
-	              { className: 'button s1', 'data-code': '190', 'data-value': '.', onClick: this.onClick },
-	              '.'
-	            )
+	            'button',
+	            { className: 'button s1 op', 'data-value': '/' },
+	            ' ÷ '
 	          )
 	        ),
 	        _react2['default'].createElement(
 	          'div',
-	          { className: 's1 column' },
+	          { className: 's1 row' },
 	          _react2['default'].createElement(
 	            'button',
-	            { className: 'button s1', 'data-code': 'shift+56', 'data-value': '*', onClick: this.onClick },
-	            '×'
+	            { className: 'button s1 num', 'data-value': '7' },
+	            ' 7 '
 	          ),
 	          _react2['default'].createElement(
 	            'button',
-	            { className: 'button s1', 'data-code': '189', 'data-value': '-', onClick: this.onClick },
-	            '-'
+	            { className: 'button s1 num', 'data-value': '8' },
+	            ' 8 '
 	          ),
 	          _react2['default'].createElement(
 	            'button',
-	            { className: 'button s1', 'data-code': '187', 'data-value': '+', onClick: this.onClick },
-	            '+'
+	            { className: 'button s1 num', 'data-value': '9' },
+	            ' 9 '
 	          ),
 	          _react2['default'].createElement(
 	            'button',
-	            { className: 'button s2 button-equal', 'data-code': '13', 'data-value': '=', onClick: this.onClick },
+	            { className: 'button s1 op t1', 'data-value': '*' },
+	            ' × '
+	          )
+	        ),
+	        _react2['default'].createElement(
+	          'div',
+	          { className: 's1 row' },
+	          _react2['default'].createElement(
+	            'button',
+	            { className: 'button s1 num', 'data-value': '4' },
+	            ' 4 '
+	          ),
+	          _react2['default'].createElement(
+	            'button',
+	            { className: 'button s1 num', 'data-value': '5' },
+	            ' 5 '
+	          ),
+	          _react2['default'].createElement(
+	            'button',
+	            { className: 'button s1 num', 'data-value': '6' },
+	            ' 6 '
+	          ),
+	          _react2['default'].createElement(
+	            'button',
+	            { className: 'button s1 op', 'data-value': '-' },
+	            ' - '
+	          )
+	        ),
+	        _react2['default'].createElement(
+	          'div',
+	          { className: 's1 row' },
+	          _react2['default'].createElement(
+	            'button',
+	            { className: 'button s1 num', 'data-value': '1' },
+	            ' 1 '
+	          ),
+	          _react2['default'].createElement(
+	            'button',
+	            { className: 'button s1 num', 'data-value': '2' },
+	            ' 2 '
+	          ),
+	          _react2['default'].createElement(
+	            'button',
+	            { className: 'button s1 num', 'data-value': '3' },
+	            ' 3 '
+	          ),
+	          _react2['default'].createElement(
+	            'button',
+	            { className: 'button s1 op', 'data-value': '+' },
+	            ' + '
+	          )
+	        ),
+	        _react2['default'].createElement(
+	          'div',
+	          { className: 's1 row' },
+	          _react2['default'].createElement(
+	            'button',
+	            { className: 'button s2 num', 'data-value': '0' },
+	            ' 0 '
+	          ),
+	          _react2['default'].createElement(
+	            'button',
+	            { className: 'button s1 num', 'data-value': '.' },
+	            ' . '
+	          ),
+	          _react2['default'].createElement(
+	            'button',
+	            { className: 'button s1 op', 'data-value': '=' },
 	            ' = '
 	          )
 	        )
@@ -30130,7 +30374,7 @@
 
 
 	// module
-	exports.push([module.id, ".react-calculator {\n  width: 100%;\n  height: 100%;\n  display: -webkit-box;\n  display: -webkit-flex;\n  display: -ms-flexbox;\n  display: flex;\n  -webkit-box-orient: vertical;\n  -webkit-box-direction: normal;\n  -webkit-flex-direction: column;\n      -ms-flex-direction: column;\n          flex-direction: column; }\n  .react-calculator .result-panel {\n    display: -webkit-box;\n    display: -webkit-flex;\n    display: -ms-flexbox;\n    display: flex;\n    padding-top: 40px;\n    -webkit-box-flex: 2;\n    -webkit-flex: 2;\n        -ms-flex: 2;\n            flex: 2;\n    -webkit-box-orient: vertical;\n    -webkit-box-direction: normal;\n    -webkit-flex-direction: column;\n        -ms-flex-direction: column;\n            flex-direction: column;\n    background-color: #e3e7e9;\n    text-align: right;\n    padding: 0px 30px;\n    line-height: 80px; }\n    .react-calculator .result-panel .last-row {\n      -webkit-box-flex: 1;\n      -webkit-flex: 1;\n          -ms-flex: 1;\n              flex: 1;\n      color: #969ba3;\n      font-size: 30px;\n      -webkit-box-align: end;\n      -webkit-align-items: flex-end;\n          -ms-flex-align: end;\n              align-items: flex-end;\n      display: -webkit-box;\n      display: -webkit-flex;\n      display: -ms-flexbox;\n      display: flex;\n      -webkit-box-pack: end;\n      -webkit-justify-content: flex-end;\n          -ms-flex-pack: end;\n              justify-content: flex-end;\n      overflow: auto;\n      max-width: 100%; }\n    .react-calculator .result-panel .cur-row {\n      -webkit-box-flex: 1;\n      -webkit-flex: 1;\n          -ms-flex: 1;\n              flex: 1;\n      color: #46494d;\n      font-size: 40px;\n      overflow: auto;\n      max-width: 100%; }\n  .react-calculator .button-panel {\n    -webkit-box-flex: 5;\n    -webkit-flex: 5;\n        -ms-flex: 5;\n            flex: 5; }\n    .react-calculator .button-panel .button {\n      cursor: pointer;\n      position: relative;\n      margin: 0;\n      padding: 0;\n      box-shadow: inset 1px 1px 0 0 #e3e7e9;\n      border: none;\n      background-color: #fafafa;\n      font-size: 30px;\n      line-height: 0px;\n      text-align: center;\n      color: #979ca4;\n      overflow: hidden; }\n      .react-calculator .button-panel .button:before {\n        content: \"\";\n        position: absolute;\n        left: 0;\n        right: 0;\n        top: 0;\n        bottom: 0;\n        margin: auto;\n        width: 40px;\n        height: 40px;\n        border-radius: 50%;\n        background: #aaa;\n        opacity: 0; }\n      .react-calculator .button-panel .button.clicked:before {\n        -webkit-animation: react-calculator-click 0.5s ease-out 0s 1 alternate forwards;\n                animation: react-calculator-click 0.5s ease-out 0s 1 alternate forwards; }\n      .react-calculator .button-panel .button.button-equal {\n        color: #fff;\n        background-color: #fa722e; }\n      .react-calculator .button-panel .button:focus {\n        outline: none; }\n\n@-webkit-keyframes react-calculator-click {\n  0% {\n    -webkit-transform: scale(1);\n            transform: scale(1);\n    opacity: .7; }\n  100% {\n    -webkit-transform: scale(3);\n            transform: scale(3);\n    opacity: 0; } }\n\n@keyframes react-calculator-click {\n  0% {\n    -webkit-transform: scale(1);\n            transform: scale(1);\n    opacity: .7; }\n  100% {\n    -webkit-transform: scale(3);\n            transform: scale(3);\n    opacity: 0; } }\n", ""]);
+	exports.push([module.id, ".react-calculator {\n  width: 100%;\n  height: 100%;\n  display: -webkit-box;\n  display: -webkit-flex;\n  display: -ms-flexbox;\n  display: flex;\n  -webkit-box-orient: vertical;\n  -webkit-box-direction: normal;\n  -webkit-flex-direction: column;\n      -ms-flex-direction: column;\n          flex-direction: column; }\n  .react-calculator .result-panel {\n    display: -webkit-box;\n    display: -webkit-flex;\n    display: -ms-flexbox;\n    display: flex;\n    padding-top: 40px;\n    -webkit-box-flex: 2;\n    -webkit-flex: 2;\n        -ms-flex: 2;\n            flex: 2;\n    -webkit-box-orient: vertical;\n    -webkit-box-direction: normal;\n    -webkit-flex-direction: column;\n        -ms-flex-direction: column;\n            flex-direction: column;\n    background-color: #181818;\n    text-align: right;\n    padding: 0px 30px;\n    line-height: 80px; }\n    .react-calculator .result-panel .last-row {\n      -webkit-box-flex: 1;\n      -webkit-flex: 1;\n          -ms-flex: 1;\n              flex: 1;\n      color: #FFF;\n      font-size: 30px;\n      -webkit-box-align: end;\n      -webkit-align-items: flex-end;\n          -ms-flex-align: end;\n              align-items: flex-end;\n      display: -webkit-box;\n      display: -webkit-flex;\n      display: -ms-flexbox;\n      display: flex;\n      -webkit-box-pack: end;\n      -webkit-justify-content: flex-end;\n          -ms-flex-pack: end;\n              justify-content: flex-end;\n      overflow: auto;\n      max-width: 100%; }\n    .react-calculator .result-panel .cur-row {\n      -webkit-box-flex: 1;\n      -webkit-flex: 1;\n          -ms-flex: 1;\n              flex: 1;\n      color: #FFF;\n      font-size: 40px;\n      overflow: auto;\n      max-width: 100%; }\n  .react-calculator .button-panel {\n    -webkit-box-flex: 5;\n    -webkit-flex: 5;\n        -ms-flex: 5;\n            flex: 5; }\n    .react-calculator .button-panel .button {\n      cursor: pointer;\n      position: relative;\n      margin: 0;\n      padding: 0;\n      box-shadow: inset 1px 1px 0 0 #141515;\n      border: none;\n      font-size: 30px;\n      line-height: 0px;\n      text-align: center; }\n      .react-calculator .button-panel .button.op {\n        background-color: #F57711;\n        color: #FFF; }\n      .react-calculator .button-panel .button.num {\n        background-color: #C7C9CC;\n        color: #000; }\n      .react-calculator .button-panel .button.sop {\n        background-color: #B7B8B9;\n        color: #000; }\n      .react-calculator .button-panel .button.op.active::before {\n        content: \"\";\n        box-sizing: border-box;\n        position: absolute;\n        top: 1px;\n        left: 1px;\n        width: 100%;\n        height: 100%;\n        border: 2px solid #000; }\n      .react-calculator .button-panel .button.clicked::after {\n        content: \"\";\n        position: absolute;\n        box-sizing: border-box;\n        top: 0;\n        left: 0;\n        background: rgba(0, 0, 0, 0.1);\n        width: 100%;\n        height: 100%; }\n      .react-calculator .button-panel .button:focus {\n        outline: none; }\n", ""]);
 
 	// exports
 
@@ -30480,7 +30724,7 @@
 
 
 	// module
-	exports.push([module.id, ".text-center {\n  display: -webkit-box;\n  display: -webkit-flex;\n  display: -ms-flexbox;\n  display: flex;\n  -webkit-box-pack: center;\n  -webkit-justify-content: center;\n      -ms-flex-pack: center;\n          justify-content: center;\n  -webkit-box-orient: vertical;\n  -webkit-box-direction: normal;\n  -webkit-flex-direction: column;\n      -ms-flex-direction: column;\n          flex-direction: column;\n  text-align: center; }\n\n.row {\n  display: -webkit-box;\n  display: -webkit-flex;\n  display: -ms-flexbox;\n  display: flex;\n  -webkit-box-orient: horizontal;\n  -webkit-box-direction: normal;\n  -webkit-flex-direction: row;\n      -ms-flex-direction: row;\n          flex-direction: row; }\n\n.column {\n  display: -webkit-box;\n  display: -webkit-flex;\n  display: -ms-flexbox;\n  display: flex;\n  -webkit-box-orient: vertical;\n  -webkit-box-direction: normal;\n  -webkit-flex-direction: column;\n      -ms-flex-direction: column;\n          flex-direction: column; }\n\n.s1 {\n  -webkit-box-flex: 1;\n  -webkit-flex: 1;\n      -ms-flex: 1;\n          flex: 1; }\n\n.s2 {\n  -webkit-box-flex: 2;\n  -webkit-flex: 2;\n      -ms-flex: 2;\n          flex: 2; }\n\n.s3 {\n  -webkit-box-flex: 3;\n  -webkit-flex: 3;\n      -ms-flex: 3;\n          flex: 3; }\n\n.s4 {\n  -webkit-box-flex: 4;\n  -webkit-flex: 4;\n      -ms-flex: 4;\n          flex: 4; }\n\n.s5 {\n  -webkit-box-flex: 5;\n  -webkit-flex: 5;\n      -ms-flex: 5;\n          flex: 5; }\n\n.s6 {\n  -webkit-box-flex: 6;\n  -webkit-flex: 6;\n      -ms-flex: 6;\n          flex: 6; }\n\n.s7 {\n  -webkit-box-flex: 7;\n  -webkit-flex: 7;\n      -ms-flex: 7;\n          flex: 7; }\n\n.s8 {\n  -webkit-box-flex: 8;\n  -webkit-flex: 8;\n      -ms-flex: 8;\n          flex: 8; }\n\n.s9 {\n  -webkit-box-flex: 9;\n  -webkit-flex: 9;\n      -ms-flex: 9;\n          flex: 9; }\n\n.s10 {\n  -webkit-box-flex: 10;\n  -webkit-flex: 10;\n      -ms-flex: 10;\n          flex: 10; }\n\n.s11 {\n  -webkit-box-flex: 11;\n  -webkit-flex: 11;\n      -ms-flex: 11;\n          flex: 11; }\n\n.s12 {\n  -webkit-box-flex: 12;\n  -webkit-flex: 12;\n      -ms-flex: 12;\n          flex: 12; }\n\n.center {\n  display: -webkit-box;\n  display: -webkit-flex;\n  display: -ms-flexbox;\n  display: flex;\n  -webkit-box-pack: center;\n  -webkit-justify-content: center;\n      -ms-flex-pack: center;\n          justify-content: center;\n  -webkit-box-orient: vertical;\n  -webkit-box-direction: normal;\n  -webkit-flex-direction: column;\n      -ms-flex-direction: column;\n          flex-direction: column;\n  text-align: center; }\n", ""]);
+	exports.push([module.id, ".text-center {\n  display: -webkit-box;\n  display: -webkit-flex;\n  display: -ms-flexbox;\n  display: flex;\n  -webkit-box-pack: center;\n  -webkit-justify-content: center;\n      -ms-flex-pack: center;\n          justify-content: center;\n  -webkit-box-orient: vertical;\n  -webkit-box-direction: normal;\n  -webkit-flex-direction: column;\n      -ms-flex-direction: column;\n          flex-direction: column;\n  text-align: center; }\n\n.row {\n  display: -webkit-box;\n  display: -webkit-flex;\n  display: -ms-flexbox;\n  display: flex;\n  -webkit-box-orient: horizontal;\n  -webkit-box-direction: normal;\n  -webkit-flex-direction: row;\n      -ms-flex-direction: row;\n          flex-direction: row; }\n\n.column {\n  display: -webkit-box;\n  display: -webkit-flex;\n  display: -ms-flexbox;\n  display: flex;\n  -webkit-box-orient: vertical;\n  -webkit-box-direction: normal;\n  -webkit-flex-direction: column;\n      -ms-flex-direction: column;\n          flex-direction: column; }\n\n.s1 {\n  -webkit-box-flex: 1;\n  -webkit-flex: 1;\n      -ms-flex: 1;\n          flex: 1; }\n\n.s2 {\n  -webkit-box-flex: 2;\n  -webkit-flex: 2;\n      -ms-flex: 2;\n          flex: 2; }\n\n.s3 {\n  -webkit-box-flex: 3;\n  -webkit-flex: 3;\n      -ms-flex: 3;\n          flex: 3; }\n\n.s4 {\n  -webkit-box-flex: 4;\n  -webkit-flex: 4;\n      -ms-flex: 4;\n          flex: 4; }\n\n.center {\n  display: -webkit-box;\n  display: -webkit-flex;\n  display: -ms-flexbox;\n  display: flex;\n  -webkit-box-pack: center;\n  -webkit-justify-content: center;\n      -ms-flex-pack: center;\n          justify-content: center;\n  -webkit-box-orient: vertical;\n  -webkit-box-direction: normal;\n  -webkit-flex-direction: column;\n      -ms-flex-direction: column;\n          flex-direction: column;\n  text-align: center; }\n", ""]);
 
 	// exports
 
@@ -30520,7 +30764,7 @@
 
 
 	// module
-	exports.push([module.id, "body {\n  margin: 0;\n  padding: 0;\n  background: #f0f0f0; }\n\n#demo {\n  position: absolute;\n  left: 0;\n  right: 0;\n  top: 0;\n  bottom: 0;\n  width: 400px;\n  height: 600px;\n  margin: auto; }\n", ""]);
+	exports.push([module.id, "body {\n  margin: 0;\n  padding: 0;\n  background: #f0f0f0; }\n\n#demo {\n  position: absolute;\n  left: 0;\n  right: 0;\n  top: 0;\n  bottom: 0;\n  width: 380px;\n  height: 665px;\n  margin: auto;\n  border: 2px solid #000; }\n", ""]);
 
 	// exports
 

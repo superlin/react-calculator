@@ -23,8 +23,17 @@ export default class Calculator extends React.Component {
       input, num, lastch, lastop, text
     } = this.state;
 
+    // 发生错误时必须按AC键
+    if (text.indexOf("Infinity") !== -1 && type !== 'a') {
+      return;
+    }
+
     switch (type) {
     case 'c':
+      if (lastch === type) {
+        break;
+      }
+      
       this.setState({
         lastch: '0',
         text: '0'
@@ -32,6 +41,10 @@ export default class Calculator extends React.Component {
       break;
 
     case 'a':
+      if (lastch === type) {
+        break;
+      }
+
       this.setState({
         input: [],
         num: 0,
@@ -230,24 +243,43 @@ export default class Calculator extends React.Component {
       break;
 
     default:
-      if (!/[+\-*=/0]/.test(lastch)) {
-        this.setState({
-          lastch: type,
-          text: text + type
-        });
-      } else {
+      // 00 -00 长度过长不响应
+      if ((text === '0' || text === '-0') && type === '0') {
+        break;
+      }
+
+      if (/[+\-*/=]/.test(lastch)){
         this.setState({
           lastch: type,
           text: type
         });
       }
+      else if (text === '0' || text === '-0') {
+        text = text.split("");
+        text[text.length - 1] = type;
+        text = text.join("");
+        this.setState({
+          lastch: type,
+          text: text
+        });
+      } else {
+        this.setState({
+          lastch: type,
+          text: text + type
+        });
+      }
     }
   }
   render() {
-    var num = this.state.text;
+    var {text, lastch} = this.state,
+      result = {
+        text: text,
+        direct: /[0-9.]/.test(lastch)
+      };
+
     return (
       <div className="react-calculator">
-        <ResultPanel num={num}/>
+        <ResultPanel result={result}/>
         <ButtonPanel onClick={this.onButtonClick} />
       </div>
     );
