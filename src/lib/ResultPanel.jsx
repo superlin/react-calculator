@@ -30,7 +30,9 @@ export default class ResultPanel extends React.Component {
         str = num.toExponential().split("+").join("");
         if (str.length > lenlimit) {
           parts = str.split('e');
-          parts[0] = parseFloat(parts[0]).toPrecision(lenlimit - 1 - parts[1].length);
+          parts[0] = parseFloat(parts[0])
+            .toPrecision(lenlimit - 1 - parts[1].length) // 保留几位小数
+            .replace(/0+$/,"");                          // 清除尾部的0
           str = parts[0] + 'e' + parts[1];
         }
       }
@@ -45,7 +47,8 @@ export default class ResultPanel extends React.Component {
         while (fReg.test(parts[0])) {
           parts[0] = parts[0].replace(fReg, "$1,$2");
         }
-        str = parts.join('.');
+        str = parts.join('.')
+          .replace(/0+$/,""); // 清除尾部的0
       }
     }
 

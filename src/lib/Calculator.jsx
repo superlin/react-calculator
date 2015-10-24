@@ -15,55 +15,65 @@ export default class Calculator extends React.Component {
     this.onButtonClick = this.onButtonClick.bind(this);
   }
   onButtonClick(type) {
-    var exp, op, ch, text, num, input, res;
+    var exp, res;
 
-    var state = this.state;
+    var {
+      input, num, lastch, lastop, text
+    } = this.state;
+
     switch (type) {
     case 'c':
       this.setState({
-        lastch: '',
-        text: ''
+        lastch: '0',
+        text: '0'
       });
       break;
 
-    case 'ac':
+    case 'a':
       this.setState({
         input: [],
         num: 0,
-        lastch: '',
+        lastch: '0',
         lastop: '+',
-        text: '',
+        text: '0',
       });
       break;
 
-    case 'pn':
-
-      break;
-
-    case '.':
-
+    case 'f':
+      if (text[0] === '-') {
+        text = text.slice(1);
+      } else {
+        text = '-' + text;
+      }
+      this.setState({
+        text: text
+      });
       break;
 
     case '+':
     case '-':
-      op = state.lastch;
-      if (op === '+' || op === '-') {
+      if (lastch === '+' || lastch === '-') {
         this.setState({
           lastop: type
         });
         break;
       }
 
-      if (state.input.length === 0) {
-        text = state.text;
+      res = parseFloat(text);
+      if (input.length === 0) {
         this.setState({
-          input: [text, type],
-          num: parseFloat(text),
+          input: [res, type],
+          num: res,
           lastop: type,
           lastch: type
         });
-      } else {
-        exp = state.input.join(" ");
+      }
+      // 6*5+
+      // 6+5+
+      // 5+5*5+
+      else if (input.length === 2 || input.length === 4) {
+        exp = input.join(" ");
+        exp += ' ' + res;
         res = eval(exp);
         this.setState({
           input: [res, type],
@@ -76,17 +86,71 @@ export default class Calculator extends React.Component {
 
       break;
 
-    case '=':
-      input = state.input;
-      num = state.num;
+    case '*':
+    case '/':
+      if (lastch === '*' || lastch === '/') {
+        this.setState({
+          lastop: type
+        });
+        break;
+      }
 
+      res = parseFloat(text);
       if (input.length === 0) {
-        exp = parseFloat(state.text) + " " + state.lastop + " " + num;
+        this.setState({
+          input: [res, type],
+          num: res,
+          lastop: type,
+          lastch: type
+        });
+      }
+      // 6+5*
+      // 6*5*
+      else if (input.length === 2) {
+        if (lastop === '+' || lastop === '-') {
+          input.push(res, type);
+          this.setState({
+            input: input,
+            num: res,
+            lastop: type,
+            lastch: type
+          });
+        } else {
+          res = eval(input.join(' ') + ' ' + res);
+          this.setState({
+            input: [res, type],
+            num: res,
+            lastop: type,
+            lastch: type,
+            text: res + ''
+          });
+        }
+      }
+      // 6+5*5*
+      else if (input.length === 4) {
+        res = eval(input[2] + ' ' + input[3] + ' ' + res);
+        input.pop();
+        input.pop();
+        input.push(res, type);
+        this.setState({
+          input: input,
+          num: res,
+          lastop: type,
+          lastch: type,
+          text: res + ''
+        });
+      }
+
+      break;
+
+    case '=':
+      res = parseFloat(text);
+      if (input.length === 0) {
+        exp = res + " " + lastop + " " + num;
       } else {
-        exp = state.input.join(" ");
-        ch = state.lastch;
-        if (/[0-9]/.test(ch)) {
-          num = parseFloat(state.text);
+        exp = input.join(" ");
+        if (/[0-9]/.test(lastch)) {
+          num = res;
         }
         exp += " " + num;
       }
@@ -100,13 +164,28 @@ export default class Calculator extends React.Component {
       });
       break;
 
+    case '.':
+      if(/[0-9.]/.test(lastch) && text.indexOf('.') !== -1) {
+        break;
+      }
+
+      if (/[0-9]/.test(lastch)) {
+        text += type;
+      } else {
+        text = '0' + type;
+      }
+
+      this.setState({
+        text: text,
+        lastch: type,
+      });
+      break;
+
     default:
-      ch = state.lastch;
-      text = state.text;
-      if (!/[+\-*=/0]/.test(ch)) {
+      if (!/[+\-*=/0]/.test(lastch)) {
         this.setState({
           lastch: type,
-          text: text+type
+          text: text + type
         });
       } else {
         this.setState({
@@ -115,64 +194,6 @@ export default class Calculator extends React.Component {
         });
       }
     }
-
-    /*var cur;
-    var lastLetter;
-    switch (type) {
-    case 'c':
-      this.setState({
-        last: '',
-        cur: '0'
-      });
-      break;
-    case 'back':
-      this.setState({
-        cur: this.state.cur === '0' ? this.state.cur : this.state.cur.slice(0, -1) || '0'
-      });
-      break;
-    case '=':
-      try {
-        this.setState({
-          last: this.state.cur + '=',
-          cur: eval(this.state.cur) + ''
-        });
-      } catch (e) {
-        this.setState({
-          last: this.state.cur + '=',
-          cur: 'NaN'
-        });
-      }
-      break;
-    case '+':
-    case '-':
-    case '*':
-    case '/':
-      cur = this.state.cur;
-      lastLetter = cur.slice(-1);
-      if (lastLetter === '+' || lastLetter === '-' || lastLetter === '*' || lastLetter === '/')
-        this.setState({
-          cur: cur.slice(0, -1) + type
-        });
-      else
-        this.setState({
-          cur: this.state.cur + type
-        });
-      break;
-    case '.':
-      cur = this.state.cur;
-      lastLetter = cur.slice(-1);
-      if (lastLetter !== '.') {
-        this.setState({
-          cur: this.state.cur + type
-        });
-      }
-      break;
-    default:
-      this.setState({
-        cur: this.state.cur === '0' ? type : this.state.cur + type
-      });
-      break;
-    }*/
   }
   render() {
     var num = this.state.text;
