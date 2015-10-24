@@ -1,27 +1,55 @@
 import React from 'react';
+import ReactDOM from 'react-dom';
 
 export default class ButtonPanel extends React.Component {
   constructor() {
     super();
     this.onClick = this.onClick.bind(this);
+    this.btns = {};
+    this.lastop = '';
+  }
+  componentDidMount() {
+    var root = ReactDOM.findDOMNode(this),
+      selfBtns = this.btns,
+      btns = root.querySelectorAll("button");
+
+    console.log(btns);
+    [].forEach.call(btns, (btn) => {
+      selfBtns[btn.dataset.value] = btn;
+    });
   }
   onClick(event) {
-    var target = event.target;
+    var target = event.target,
+      dataset = target.dataset,
+      lastop = this.lastop,
+      btns = this.btns;
 
     if (target.tagName !== 'BUTTON') {
       return;
     }
 
-    var btns = target.parentNode.parentNode.querySelectorAll("button");
-    [].forEach.call(btns, (btn) => {
-      btn.classList.remove('active');
+    [].forEach.call(Object.keys(btns), (key) => {
+      btns[key].classList.remove('active');
     });
 
-    target.classList.add('clicked', 'active');
+    // 只有运算符会设置active
+    if (/[+\-*/]/.test(dataset.value)) {
+      target.classList.add('active');
+      this.lastop = dataset.value;
+    }
+    // 清除时，之前的运算符高亮
+    else if (dataset.value === 'c') {
+      if (lastop) {
+        this.btns[lastop].classList.add('active');
+      }
+    }
+
+    target.classList.add('clicked');
     setTimeout(() => {
       target.classList.remove('clicked');
     }, 200);
-    this.props.onClick(target.dataset.value);
+    
+    this.props.onClick(dataset.value);
   }
   render() {
     return (
