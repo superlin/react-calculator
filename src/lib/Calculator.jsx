@@ -8,15 +8,15 @@ export default class Calculator extends React.Component {
     this.state = {
       input: [],
       num: 0,
-      lastch: '',
+      lastch: '0',
       lastop: '+',
-      text: ''
+      text: '0'
     };
     this.onButtonClick = this.onButtonClick.bind(this);
   }
   onButtonClick(type) {
     /*jshint evil:true*/
-    
+
     var exp, res;
 
     var {
@@ -54,10 +54,37 @@ export default class Calculator extends React.Component {
 
     case '+':
     case '-':
-      if (lastch === '+' || lastch === '-') {
-        this.setState({
-          lastop: type
-        });
+      if (lastch === type) {
+        break;
+      }
+
+      if (/[+\-*/]/.test(lastch)) {
+        if (input.length === 0) {
+          this.setState({
+            lastop: type,
+            lastch: type
+          });
+        }
+        // 5*-
+        else if (input.length === 2) {
+          input[1] = type;
+          this.setState({
+            input: input,
+            lastop: type,
+            lastch: type
+          });
+        }
+        // 5+5*-
+        else if (input.length === 4) {
+          res = eval(input.slice(0, 2).join(" "));
+          this.setState({
+            input: [res, type],
+            lastop: type,
+            lastch: type,
+            num: res
+          });
+        }
+
         break;
       }
 
@@ -90,10 +117,28 @@ export default class Calculator extends React.Component {
 
     case '*':
     case '/':
-      if (lastch === '*' || lastch === '/') {
-        this.setState({
-          lastop: type
-        });
+      if (lastch === type) {
+        break;
+      }
+
+      if (/[+\-*/]/.test(lastch)) {
+        // 5+5*/
+        if (input.length === 0 || input.length === 4) {
+          this.setState({
+            lastop: type,
+            lastch: type
+          });
+        }
+        // 5+*
+        else if (input.length === 2) {
+          input[1] = type;
+          this.setState({
+            input: input,
+            lastop: type,
+            lastch: type
+          });
+        }
+
         break;
       }
 
@@ -151,7 +196,7 @@ export default class Calculator extends React.Component {
         exp = res + " " + lastop + " " + num;
       } else {
         exp = input.join(" ");
-        if (/[0-9]/.test(lastch)) {
+        if (/[0-9.]/.test(lastch)) {
           num = res;
         }
         exp += " " + num;
@@ -167,6 +212,7 @@ export default class Calculator extends React.Component {
       break;
 
     case '.':
+      // 无效输入：输入的字符串已经含有小数点
       if(/[0-9.]/.test(lastch) && text.indexOf('.') !== -1) {
         break;
       }
