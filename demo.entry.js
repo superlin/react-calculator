@@ -54,7 +54,7 @@
 /******/ 	
 /******/ 	
 /******/ 	var hotApplyOnUpdate = true;
-/******/ 	var hotCurrentHash = "e2711bcd17482b17d876"; // eslint-disable-line no-unused-vars
+/******/ 	var hotCurrentHash = "315628a1d20130e6535f"; // eslint-disable-line no-unused-vars
 /******/ 	var hotCurrentModuleData = {};
 /******/ 	var hotCurrentParents = []; // eslint-disable-line no-unused-vars
 /******/ 	
@@ -29600,8 +29600,22 @@
 	      var lastop = _state.lastop;
 	      var text = _state.text;
 
+	      // 发生错误时必须按AC键
+	      if (text.indexOf("Infinity") !== -1 && type !== 'a') {
+	        return;
+	      }
+
+	      // 连续输入时，长度超过限制不响应
+	      if (/[0-9.]/.test(type) && /[0-9.]/.test(lastch) && this.refs.respan.getTextLen() >= 10) {
+	        return;
+	      }
+
 	      switch (type) {
 	        case 'c':
+	          if (lastch === type) {
+	            break;
+	          }
+
 	          this.setState({
 	            lastch: '0',
 	            text: '0'
@@ -29609,6 +29623,10 @@
 	          break;
 
 	        case 'a':
+	          if (lastch === type) {
+	            break;
+	          }
+
 	          this.setState({
 	            input: [],
 	            num: 0,
@@ -29807,15 +29825,28 @@
 	          break;
 
 	        default:
-	          if (!/[+\-*=/0]/.test(lastch)) {
+	          // 00 -00 长度过长不响应
+	          if ((text === '0' || text === '-0') && type === '0') {
+	            break;
+	          }
+
+	          if (/[+\-*/=]/.test(lastch)) {
 	            this.setState({
 	              lastch: type,
-	              text: text + type
+	              text: type
+	            });
+	          } else if (text === '0' || text === '-0') {
+	            text = text.split("");
+	            text[text.length - 1] = type;
+	            text = text.join("");
+	            this.setState({
+	              lastch: type,
+	              text: text
 	            });
 	          } else {
 	            this.setState({
 	              lastch: type,
-	              text: type
+	              text: text + type
 	            });
 	          }
 	      }
@@ -29823,11 +29854,18 @@
 	  }, {
 	    key: 'render',
 	    value: function render() {
-	      var num = this.state.text;
+	      var _state2 = this.state;
+	      var text = _state2.text;
+	      var lastch = _state2.lastch;
+	      var result = {
+	        text: text,
+	        direct: /[0-9.]/.test(lastch)
+	      };
+
 	      return _react2['default'].createElement(
 	        'div',
 	        { className: 'react-calculator' },
-	        _react2['default'].createElement(_ResultPanel2['default'], { num: num }),
+	        _react2['default'].createElement(_ResultPanel2['default'], { result: result, ref: 'respan' }),
 	        _react2['default'].createElement(_ButtonPanel2['default'], { onClick: this.onButtonClick })
 	      );
 	    }
@@ -29876,13 +29914,16 @@
 
 	    //start-non-standard
 	    value: {
-	      num: _react2['default'].PropTypes.string
+	      result: _react2['default'].PropTypes.object
 	    },
 	    enumerable: true
 	  }, {
 	    key: 'defaultProps',
 	    value: {
-	      num: '0'
+	      result: {
+	        text: '0',
+	        direct: true
+	      }
 	    },
 
 	    //end-non-standard
@@ -29893,57 +29934,99 @@
 	    _classCallCheck(this, ResultPanel);
 
 	    _get(Object.getPrototypeOf(ResultPanel.prototype), 'constructor', this).call(this);
+	    this.txtLen = 1;
+	    this.resultDiv = null;
 	  }
 
 	  _createClass(ResultPanel, [{
+	    key: 'getTextLen',
+	    value: function getTextLen() {
+	      return this.txtLen;
+	    }
+	  }, {
 	    key: 'render',
 	    value: function render() {
-	      var num = this.props.num,
-	          str = num,
-	          lenlimit = 10,
-	          fReg = /(\d+)(\d{3})/,
-	          parts;
+	      var _props$result = this.props.result;
+	      var text = _props$result.text;
+	      var direct = _props$result.direct;
+	      var str = text;
+	      var lenlimit = 10;
+	      var fReg = /(\d+)(\d{3})/;
+	      var parts;
 
-	      if (num !== '-0' && num !== '0' && num[num.length - 1] !== '.') {
-	        num = parseFloat(num);
+	      // 直接输入
+	      if (direct) {
+	        parts = str.split('.');
+	        while (fReg.test(parts[0])) {
+	          parts[0] = parts[0].replace(fReg, "$1,$2");
+	        }
+	        if (parts.length > 1) {
+	          str = parts.join('.');
+	        } else {
+	          str = parts[0];
+	        }
+	      } else {
+	        text = parseFloat(text);
 	        // 不是数字或者超出范围
-	        if (isNaN(num) || !isFinite(num)) {
+	        if (isNaN(text) || !isFinite(text)) {
 	          str = '错误';
 	        } else {
 	          // 大整数或者很小的浮点数，使用科学计数法
 	          // 如果科学计数法的前半部分过长，保留一定的精度
-	          if (num > 0 && (num >= parseFloat('1e' + lenlimit) || num < parseFloat('1e-' + (lenlimit - 2))) || num < 0 && (num <= parseFloat('-1e' + (lenlimit - 1)) || num > parseFloat('-1e-' + (lenlimit - 3)))) {
-	            str = num.toExponential().split("+").join("");
-	            if (str.length > lenlimit) {
+	          if (text > 0 && (text >= parseFloat('1e' + lenlimit) || text < parseFloat('1e-' + (lenlimit - 1))) || text < 0 && (text <= parseFloat('-1e' + (lenlimit - 1)) || text > parseFloat('-1e-' + (lenlimit - 2)))) {
+
+	            parts = parseFloat(text).toExponential().replace("+", "").split("e");
+	            str = parseFloat(text).toPrecision(lenlimit - 1 - parts[1].length).split("+").join("");
+	            if (str.replace(".", "").length > lenlimit) {
 	              parts = str.split('e');
-	              parts[0] = parseFloat(parts[0]).toPrecision(lenlimit - 1 - parts[1].length) // 保留几位小数
-	              .replace(/0+$/, ""); // 清除尾部的0
+	              parts[0] = parts[0].replace(/\.?0+$/, ""); // 清除尾部的0
 	              str = parts[0] + 'e' + parts[1];
 	            }
 	          }
 	          // 不需要科学计数法的数学
 	          // 整数部分逗号分隔
 	          else {
-	              str = num + '';
-	              if (str.length > lenlimit) {
-	                str = num.toPrecision(lenlimit);
-	              }
+	              str = parseFloat(text).toPrecision(lenlimit);
 	              parts = str.split('.');
 	              while (fReg.test(parts[0])) {
 	                parts[0] = parts[0].replace(fReg, "$1,$2");
 	              }
-	              str = parts.join('.').replace(/(\.\d*[1-9]+)(0+)$/, "$1"); // 清除尾部的0
+	              if (parts.length > 1) {
+	                str = parts.join('.');
+	              } else {
+	                str = parts[0];
+	              }
+	              str = str.replace(/\.?0+$/, ""); // 清除尾部的0
 	            }
 	        }
+	      }
+
+	      var fontClass = "result";
+	      this.txtLen = str.replace(/[.,]/g, '').length;
+	      switch (this.txtLen) {
+	        case 7:
+	          fontClass += " large";
+	          break;
+	        case 8:
+	          fontClass += " normal";
+	          break;
+	        case 9:
+	          fontClass += " middle";
+	          break;
+	        case 10:
+	        case 11:
+	          fontClass += " small";
+	          break;
+	        default:
+	          break;
 	      }
 
 	      return _react2['default'].createElement(
 	        'div',
 	        { className: 'result-panel' },
-	        _react2['default'].createElement('div', { className: 'last-row' }),
 	        _react2['default'].createElement(
 	          'div',
-	          { className: 'cur-row' },
+	          { className: fontClass },
 	          str
 	        )
 	      );
@@ -30198,6 +30281,10 @@
 	            this.btns[lastop].classList.add('active');
 	          }
 	        }
+	        // 全部清除时，清除上一次的操作符
+	        else if (dataset.value === 'a') {
+	            this.lastop = "";
+	          }
 
 	      setTimeout(function () {
 	        target.classList.remove('clicked');
@@ -30374,7 +30461,7 @@
 
 
 	// module
-	exports.push([module.id, ".react-calculator {\n  width: 100%;\n  height: 100%;\n  display: -webkit-box;\n  display: -webkit-flex;\n  display: -ms-flexbox;\n  display: flex;\n  -webkit-box-orient: vertical;\n  -webkit-box-direction: normal;\n  -webkit-flex-direction: column;\n      -ms-flex-direction: column;\n          flex-direction: column; }\n  .react-calculator .result-panel {\n    display: -webkit-box;\n    display: -webkit-flex;\n    display: -ms-flexbox;\n    display: flex;\n    padding-top: 40px;\n    -webkit-box-flex: 2;\n    -webkit-flex: 2;\n        -ms-flex: 2;\n            flex: 2;\n    -webkit-box-orient: vertical;\n    -webkit-box-direction: normal;\n    -webkit-flex-direction: column;\n        -ms-flex-direction: column;\n            flex-direction: column;\n    background-color: #181818;\n    text-align: right;\n    padding: 0px 30px;\n    line-height: 80px; }\n    .react-calculator .result-panel .last-row {\n      -webkit-box-flex: 1;\n      -webkit-flex: 1;\n          -ms-flex: 1;\n              flex: 1;\n      color: #FFF;\n      font-size: 30px;\n      -webkit-box-align: end;\n      -webkit-align-items: flex-end;\n          -ms-flex-align: end;\n              align-items: flex-end;\n      display: -webkit-box;\n      display: -webkit-flex;\n      display: -ms-flexbox;\n      display: flex;\n      -webkit-box-pack: end;\n      -webkit-justify-content: flex-end;\n          -ms-flex-pack: end;\n              justify-content: flex-end;\n      overflow: auto;\n      max-width: 100%; }\n    .react-calculator .result-panel .cur-row {\n      -webkit-box-flex: 1;\n      -webkit-flex: 1;\n          -ms-flex: 1;\n              flex: 1;\n      color: #FFF;\n      font-size: 40px;\n      overflow: auto;\n      max-width: 100%; }\n  .react-calculator .button-panel {\n    -webkit-box-flex: 5;\n    -webkit-flex: 5;\n        -ms-flex: 5;\n            flex: 5; }\n    .react-calculator .button-panel .button {\n      cursor: pointer;\n      position: relative;\n      margin: 0;\n      padding: 0;\n      box-shadow: inset 1px 1px 0 0 #141515;\n      border: none;\n      font-size: 30px;\n      line-height: 0px;\n      text-align: center; }\n      .react-calculator .button-panel .button.op {\n        background-color: #F57711;\n        color: #FFF; }\n      .react-calculator .button-panel .button.num {\n        background-color: #C7C9CC;\n        color: #000; }\n      .react-calculator .button-panel .button.sop {\n        background-color: #B7B8B9;\n        color: #000; }\n      .react-calculator .button-panel .button.op.active::before {\n        content: \"\";\n        box-sizing: border-box;\n        position: absolute;\n        top: 1px;\n        left: 1px;\n        width: 100%;\n        height: 100%;\n        border: 2px solid #000; }\n      .react-calculator .button-panel .button.clicked::after {\n        content: \"\";\n        position: absolute;\n        box-sizing: border-box;\n        top: 0;\n        left: 0;\n        background: rgba(0, 0, 0, 0.1);\n        width: 100%;\n        height: 100%; }\n      .react-calculator .button-panel .button:focus {\n        outline: none; }\n", ""]);
+	exports.push([module.id, ".react-calculator {\n  width: 100%;\n  height: 100%;\n  display: -webkit-box;\n  display: -webkit-flex;\n  display: -ms-flexbox;\n  display: flex;\n  -webkit-box-orient: vertical;\n  -webkit-box-direction: normal;\n  -webkit-flex-direction: column;\n      -ms-flex-direction: column;\n          flex-direction: column; }\n  .react-calculator .result-panel {\n    margin-bottom: -1px;\n    z-index: 2;\n    box-sizing: border-box;\n    display: -webkit-box;\n    display: -webkit-flex;\n    display: -ms-flexbox;\n    display: flex;\n    -webkit-box-flex: 2;\n    -webkit-flex: 2;\n        -ms-flex: 2;\n            flex: 2;\n    -webkit-flex-flow: row-reverse;\n        -ms-flex-flow: row-reverse;\n            flex-flow: row-reverse;\n    background-color: #181818; }\n    .react-calculator .result-panel .result {\n      -webkit-align-self: flex-end;\n          -ms-flex-item-align: end;\n              align-self: flex-end;\n      padding: 10px 25px;\n      color: #FFF;\n      font-size: 86px; }\n      .react-calculator .result-panel .result.large {\n        font-size: 74px; }\n      .react-calculator .result-panel .result.normal {\n        font-size: 64px; }\n      .react-calculator .result-panel .result.middle {\n        font-size: 56px; }\n      .react-calculator .result-panel .result.small {\n        font-size: 50px; }\n  .react-calculator .button-panel {\n    -webkit-box-flex: 5;\n    -webkit-flex: 5;\n        -ms-flex: 5;\n            flex: 5; }\n    .react-calculator .button-panel .button {\n      -webkit-tap-highlight-color: transparent;\n      cursor: pointer;\n      position: relative;\n      margin: 0;\n      padding: 0;\n      box-shadow: inset 1px 1px 0 0 #000;\n      border: none;\n      font-size: 30px;\n      line-height: 0px;\n      text-align: center; }\n      .react-calculator .button-panel .button.op {\n        background-color: #F57711;\n        color: #FFF; }\n      .react-calculator .button-panel .button.num {\n        background-color: #C7C9CC;\n        color: #000; }\n      .react-calculator .button-panel .button.sop {\n        background-color: #B7B8B9;\n        color: #000; }\n      .react-calculator .button-panel .button.op.active::before {\n        content: \"\";\n        box-sizing: border-box;\n        position: absolute;\n        top: 1px;\n        left: 1px;\n        width: 100%;\n        height: 100%;\n        border: 2px solid #000; }\n      .react-calculator .button-panel .button.clicked::after {\n        content: \"\";\n        position: absolute;\n        box-sizing: border-box;\n        top: 0;\n        left: 0;\n        background: rgba(0, 0, 0, 0.1);\n        width: 100%;\n        height: 100%; }\n      .react-calculator .button-panel .button:focus {\n        outline: none; }\n", ""]);
 
 	// exports
 
@@ -30764,7 +30851,7 @@
 
 
 	// module
-	exports.push([module.id, "body {\n  margin: 0;\n  padding: 0;\n  background: #f0f0f0; }\n\n#demo {\n  position: absolute;\n  left: 0;\n  right: 0;\n  top: 0;\n  bottom: 0;\n  width: 380px;\n  height: 665px;\n  margin: auto;\n  border: 2px solid #000; }\n", ""]);
+	exports.push([module.id, "body {\n  margin: 0;\n  padding: 0;\n  background: #f0f0f0; }\n\n#demo {\n  position: absolute;\n  left: 0;\n  right: 0;\n  top: 0;\n  bottom: 0;\n  width: 375px;\n  height: 664px;\n  margin: auto;\n  border: 2px solid #000; }\n", ""]);
 
 	// exports
 
