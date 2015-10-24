@@ -15,6 +15,8 @@ export default class Calculator extends React.Component {
     this.onButtonClick = this.onButtonClick.bind(this);
   }
   onButtonClick(type) {
+    /*jshint evil:true*/
+    
     var exp, res;
 
     var {

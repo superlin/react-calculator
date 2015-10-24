@@ -1,12 +1,14 @@
 import React from 'react';
 
 export default class ResultPanel extends React.Component {
+  //start-non-standard
   static propTypes = {
     num: React.PropTypes.string
   };
   static defaultProps = {
     num: '0'
   };
+  //end-non-standard
   constructor() {
     super();
   }

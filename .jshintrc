@@ -13,6 +13,10 @@
   "unused": true,
   "browser": true,
   "node": true,
+  "ignoreDelimiters": [{
+    "start": "start-non-standard",
+    "end": "end-non-standard"
+  }],
   "esnext": true,
   "globals": {
     "describe": false,
