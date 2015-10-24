@@ -14,6 +14,10 @@ export default class ResultPanel extends React.Component {
   //end-non-standard
   constructor() {
     super();
+    this.txtLen = 1;
+  }
+  getTextLen() {
+    return this.txtLen;
   }
   render() {
     var {text, direct} = this.props.result,
@@ -44,7 +48,8 @@ export default class ResultPanel extends React.Component {
         if (text > 0 && (text >= parseFloat('1e' + lenlimit) || text < parseFloat('1e-' + (lenlimit - 1)))
             || text < 0 && (text <= parseFloat('-1e' + (lenlimit - 1)) || text > parseFloat('-1e-' + (lenlimit - 2)))) {
 
-          str = parseFloat(text).toPrecision(lenlimit).split("+").join("");
+          parts = parseFloat(text).toExponential().replace("+","").split("e");
+          str = parseFloat(text).toPrecision(lenlimit - 1 - parts[1].length).split("+").join("");
           if (str.replace(".", "").length > lenlimit) {
             parts = str.split('e');
             parts[0] = parts[0].replace(/\.?0+$/,"");  // 清除尾部的0
@@ -68,6 +73,8 @@ export default class ResultPanel extends React.Component {
         }
       }
     }
+
+    this.txtLen = str.replace(/[.,]/,'').length;
 
     return (
       <div className="result-panel">

@@ -28,12 +28,17 @@ export default class Calculator extends React.Component {
       return;
     }
 
+    // 连续输入时，长度超过限制不响应
+    if (/[0-9.]/.test(type) && /[0-9.]/.test(lastch) && this.refs.respan.getTextLen() > 10) {
+      return;
+    }
+
     switch (type) {
     case 'c':
       if (lastch === type) {
         break;
       }
-      
+
       this.setState({
         lastch: '0',
         text: '0'
@@ -279,7 +284,7 @@ export default class Calculator extends React.Component {
 
     return (
       <div className="react-calculator">
-        <ResultPanel result={result}/>
+        <ResultPanel result={result} ref="respan" />
         <ButtonPanel onClick={this.onButtonClick} />
       </div>
     );
