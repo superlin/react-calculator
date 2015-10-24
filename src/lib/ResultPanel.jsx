@@ -2,7 +2,7 @@ import React from 'react';
 
 export default class ResultPanel extends React.Component {
   //start-non-standard
-  /*static propTypes = {
+  static propTypes = {
     result: React.PropTypes.object
   };
   static defaultProps = {
@@ -10,7 +10,7 @@ export default class ResultPanel extends React.Component {
       text: '0',
       direct: true
     }
-  };*/
+  };
   //end-non-standard
   constructor() {
     super();
@@ -76,7 +76,6 @@ export default class ResultPanel extends React.Component {
     }
 
     var fontClass = "result";
-    console.log(str);
     this.txtLen = str.replace(/[.,]/g,'').length;
     switch (this.txtLen) {
       case 7:
@@ -89,6 +88,7 @@ export default class ResultPanel extends React.Component {
         fontClass += " middle";
         break;
       case 10:
+      case 11:
         fontClass += " small";
         break;
       default:

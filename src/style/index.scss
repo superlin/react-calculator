@@ -5,6 +5,10 @@
   flex-direction: column;
 
   .result-panel {
+    // fixed: top most line
+    margin-bottom: -1px;
+    z-index: 2;
+
     box-sizing: border-box;
     display: flex;
     flex: 2;
@@ -13,18 +17,18 @@
 
     .result {
       align-self: flex-end;
-      padding: 10px 30px;
+      padding: 10px 25px;
       color: #FFF;
       font-size: 86px;
 
       &.large {
-        font-size: 77px;
+        font-size: 74px;
       }
       &.normal {
-        font-size: 68px;
+        font-size: 64px;
       }
       &.middle {
-        font-size: 59px;
+        font-size: 56px;
       }
       &.small {
         font-size: 50px;
@@ -36,6 +40,7 @@
     flex: 5;
 
     .button {
+      -webkit-tap-highlight-color: rgba(0,0,0,0);
       cursor: pointer;
       position: relative;
       margin: 0;

@@ -70,6 +70,10 @@ export default class ButtonPanel extends React.Component {
         this.btns[lastop].classList.add('active');
       }
     }
+    // 全部清除时，清除上一次的操作符
+    else if (dataset.value === 'a') {
+      this.lastop = "";
+    }
 
     setTimeout(() => {
       target.classList.remove('clicked');
