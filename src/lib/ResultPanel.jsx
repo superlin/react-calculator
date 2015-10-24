@@ -2,7 +2,7 @@ import React from 'react';
 
 export default class ResultPanel extends React.Component {
   //start-non-standard
-  static propTypes = {
+  /*static propTypes = {
     result: React.PropTypes.object
   };
   static defaultProps = {
@@ -10,11 +10,12 @@ export default class ResultPanel extends React.Component {
       text: '0',
       direct: true
     }
-  };
+  };*/
   //end-non-standard
   constructor() {
     super();
     this.txtLen = 1;
+    this.resultDiv = null;
   }
   getTextLen() {
     return this.txtLen;
@@ -33,7 +34,7 @@ export default class ResultPanel extends React.Component {
         parts[0] = parts[0].replace(fReg, "$1,$2");
       }
       if (parts.length > 1) {
-        str = parts.join('.')
+        str = parts.join('.');
       } else {
         str = parts[0];
       }
@@ -65,7 +66,7 @@ export default class ResultPanel extends React.Component {
             parts[0] = parts[0].replace(fReg, "$1,$2");
           }
           if (parts.length > 1) {
-            str = parts.join('.')
+            str = parts.join('.');
           } else {
             str = parts[0];
           }
@@ -74,12 +75,29 @@ export default class ResultPanel extends React.Component {
       }
     }
 
-    this.txtLen = str.replace(/[.,]/,'').length;
+    var fontClass = "result";
+    console.log(str);
+    this.txtLen = str.replace(/[.,]/g,'').length;
+    switch (this.txtLen) {
+      case 7:
+        fontClass += " large";
+        break;
+      case 8:
+        fontClass += " normal";
+        break;
+      case 9:
+        fontClass += " middle";
+        break;
+      case 10:
+        fontClass += " small";
+        break;
+      default:
+        break;
+    }
 
     return (
       <div className="result-panel">
-        <div className="last-row"></div>
-        <div className="cur-row">{str}</div>
+        <div className={fontClass}>{str}</div>
       </div>
     );
   }

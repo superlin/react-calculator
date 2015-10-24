@@ -29,7 +29,7 @@ export default class Calculator extends React.Component {
     }
 
     // 连续输入时，长度超过限制不响应
-    if (/[0-9.]/.test(type) && /[0-9.]/.test(lastch) && this.refs.respan.getTextLen() > 10) {
+    if (/[0-9.]/.test(type) && /[0-9.]/.test(lastch) && this.refs.respan.getTextLen() >= 10) {
       return;
     }
 

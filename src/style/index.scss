@@ -5,31 +5,30 @@
   flex-direction: column;
 
   .result-panel {
+    box-sizing: border-box;
     display: flex;
-    padding-top: 40px;
     flex: 2;
-    flex-direction: column;
+    flex-flow: row-reverse;
     background-color: #181818;
-    text-align: right;
-    padding: 0px 30px;
-    line-height: 80px;
 
-    .last-row {
-      flex: 1;
+    .result {
+      align-self: flex-end;
+      padding: 10px 30px;
       color: #FFF;
-      font-size: 30px;
-      align-items: flex-end;
-      display: flex;
-      justify-content: flex-end;
-      overflow: auto;
-      max-width: 100%;
-    }
-    .cur-row {
-      flex: 1;
-      color: #FFF;
-      font-size: 40px;
-      overflow: auto;
-      max-width: 100%;
+      font-size: 86px;
+
+      &.large {
+        font-size: 77px;
+      }
+      &.normal {
+        font-size: 68px;
+      }
+      &.middle {
+        font-size: 59px;
+      }
+      &.small {
+        font-size: 50px;
+      }
     }
   }
 
@@ -41,7 +40,7 @@
       position: relative;
       margin: 0;
       padding: 0;
-      box-shadow: inset 1px 1px 0 0 #141515;
+      box-shadow: inset 1px 1px 0 0 #000;
       border: none;
       font-size: 30px;
       line-height: 0px;
