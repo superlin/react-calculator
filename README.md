@@ -1,6 +1,6 @@
 # React Calculator
 
-React实现iOS计算器
+React实现iOS计算器（[DEMO](http://superlin.github.io/demos/react/calculator/)）
 
 ## Development
 
