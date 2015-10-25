@@ -60,7 +60,13 @@ export default class ResultPanel extends React.Component {
         // 不需要科学计数法的数学
         // 整数部分逗号分隔
         else {
-          str = parseFloat(text).toPrecision(lenlimit);
+          str = parseFloat(text);
+          if (str < 1) {
+            str = str.toFixed(lenlimit - 1);
+          } else {
+            str = parseFloat(text).toPrecision(lenlimit);
+          }
+          
           parts = str.split('.');
           while (fReg.test(parts[0])) {
             parts[0] = parts[0].replace(fReg, "$1,$2");
@@ -77,22 +83,14 @@ export default class ResultPanel extends React.Component {
 
     var fontClass = "result";
     this.txtLen = str.replace(/[.,]/g,'').length;
-    switch (this.txtLen) {
-      case 7:
-        fontClass += " large";
-        break;
-      case 8:
-        fontClass += " normal";
-        break;
-      case 9:
-        fontClass += " middle";
-        break;
-      case 10:
-      case 11:
-        fontClass += " small";
-        break;
-      default:
-        break;
+    if (this.txtLen === 7) {
+      fontClass += " large";
+    } else if (this.txtLen === 8) {
+      fontClass += " normal";
+    } else if (this.txtLen === 9) {
+      fontClass += " middle";
+    } else if (this.txtLen >= 10) {
+      fontClass += " small";
     }
 
     return (
