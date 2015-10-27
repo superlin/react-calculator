@@ -4,7 +4,7 @@ React实现iOS计算器（[DEMO](http://superlin.github.io/demos/react/calculato
 
 ## Screenshots
 
-![Screenshots](http://github.com/superlin/react-calculator/raw/master/img/calculator-sample.png)
+See images in im floder
 
 ## Development
 

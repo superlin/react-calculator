@@ -3,6 +3,8 @@ body {
   padding: 0;
   background: #f0f0f0;
   font-family: SF, -apple-system;
+  /* 禁止选中文本（如无文本选中需求，此为必选项） */
+  user-select: none;
 }
 
 #demo {
@@ -11,8 +13,9 @@ body {
   right: 0;
   top: 0;
   bottom: 0;
-  width: 375px;
-  height: 667px;
+  box-sizing: border-box;
+  width: 100vw;
+  height: 100vh;
   margin: auto;
   border: 2px solid #000;
 }
